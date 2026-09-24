@@ -1,0 +1,140 @@
+name: Product API Production CRUD CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  crud-integration:
+    runs-on: ubuntu-latest
+
+    env:
+      PORT: 3000
+      MONGO_URI: mongodb://127.0.0.1:27017/productdb_ci
+
+    services:
+      mongodb:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval \"db.adminCommand('ping').ok\""
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 10s
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start Product API
+        run: |
+          nohup npm start > api.log 2>&1 &
+
+      - name: Wait for API
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/products > /dev/null; then
+              echo "API is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          cat api.log
+          exit 1
+
+      - name: Test CRUD with MongoDB
+        env:
+          BASE_URL: http://127.0.0.1:3000/api/products
+          CI_RUN_ID: ${{ github.run_id }}
+        run: |
+          node <<'NODE'
+          const base = process.env.BASE_URL;
+          const pid = 100000 + (Number(process.env.CI_RUN_ID) % 900000);
+
+          async function request(path, options = {}, accepted = [200]) {
+            const response = await fetch(`${base}${path}`, {
+              ...options,
+              headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+              }
+            });
+
+            const body = await response.text();
+
+            if (!accepted.includes(response.status)) {
+              throw new Error(
+                `${options.method || "GET"} ${path} -> ${response.status}\n${body}`
+              );
+            }
+
+            console.log(`${options.method || "GET"} ${path} -> ${response.status}`);
+            return body;
+          }
+
+          await request("", {}, [200]);
+
+          await request(
+            "",
+            {
+              method: "POST",
+              body: JSON.stringify({
+                pid,
+                pname: "CI Product",
+                price: 123.45,
+                quantity: 5
+              })
+            },
+            [200, 201]
+          );
+
+          await request(`/${pid}`, {}, [200]);
+
+          await request(
+            `/${pid}`,
+            {
+              method: "PUT",
+              body: JSON.stringify({
+                pid,
+                pname: "CI Product Updated",
+                price: 150,
+                quantity: 7
+              })
+            },
+            [200]
+          );
+
+          await request(`/${pid}`, { method: "DELETE" }, [200, 204]);
+
+          const deletedProduct = await fetch(`${base}/${pid}`);
+
+          if (deletedProduct.status !== 404) {
+            throw new Error(
+              `DELETE verification failed. Expected 404, got ${deletedProduct.status}`
+            );
+          }
+
+          console.log("CRUD integration test passed");
+          NODE
+
+      - name: Show API log if failed
+        if: failure()
+        run: |
+          test -f api.log && cat api.log || true

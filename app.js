@@ -53,16 +53,22 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal server error.' });
 });
 
-// MongoDB connection check -> start server
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    console.log('✅ MongoDB connected successfully');
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+// 🆕 MongoDB connection check -> start server
+// Chỉ chạy khi gọi trực tiếp "node app.js" (không chạy khi file test require app)
+if (require.main === module) {
+  mongoose
+    .connect(MONGO_URI)
+    .then(() => {
+      console.log('✅ MongoDB connected successfully');
+      app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection failed:', err.message);
+      process.exit(1);
     });
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection failed:', err.message);
-    process.exit(1);
-  });
+}
+
+// 🆕 Export app để file test sử dụng
+module.exports = app;

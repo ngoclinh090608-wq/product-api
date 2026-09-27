@@ -39,6 +39,9 @@ app.use((req, res) => {
 
 // Error handler middleware
 app.use((err, req, res, next) => {
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ message: 'Invalid JSON body.' });
+  }
   if (err.name === 'ValidationError') {
     const errors = Object.values(err.errors).map((e) => e.message);
     return res.status(400).json({ message: 'Validation failed.', errors });

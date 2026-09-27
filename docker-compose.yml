@@ -1,5 +1,5 @@
 # Tên project Compose (thay cho tên thư mục)
-name: product-api
+name: product-compose
 
 services:
   # ---------- MongoDB ----------

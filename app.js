@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+const morgan = require('morgan');
 const productRoutes = require('./routes/productRoutes');
 
 // Load .env file
@@ -15,6 +16,7 @@ const MONGO_URI = process.env.URL_MONGO + process.env.DATABASE_NAME;
 console.log('MongoDB URI:', MONGO_URI);
 
 // Middleware: parse JSON body
+app.use(morgan('dev', { skip: (req) => req.url === '/health' }));
 app.use(express.json());
 
 // Routes

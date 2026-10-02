@@ -6,7 +6,7 @@
 
 RESTful API quản lý sản phẩm (**Product**: `pid`, `pname`, `price`, `quantity`), xây dựng bằng **Node.js, Express và Mongoose**, lưu dữ liệu trên **MongoDB**. Dự án được đóng gói bằng **Docker**, chạy bằng **Docker Compose** có **healthcheck**, và triển khai tự động qua quy trình **CI/CD với GitHub Actions → Docker Hub → Docker Engine trên máy**.
 
-> Bài tập **Prompt 1: CI/CD**, IUH.
+> Bài tập **Prompt 1: CI/CD**
 
 ---
 
@@ -316,6 +316,3 @@ npm run test:smoke                                     # smoke test container
 
 ---
 
-## Tác giả
-
-**Ngoc Linh** ([@ngoclinh090608-wq](https://github.com/ngoclinh090608-wq))

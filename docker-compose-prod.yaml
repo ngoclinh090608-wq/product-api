@@ -1,0 +1,65 @@
+# PRODUCTION: chạy container từ image trên Docker Hub (do CD ở Bước 12 đẩy lên)
+# Chạy:  docker compose -f docker-compose-prod.yaml up -d
+name: product-prod
+
+services:
+  # ---------- MongoDB ----------
+  mongodb:
+    image: mongo:8.0
+    container_name: nammongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - product-prod-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------- Product API (image từ Docker Hub, KHÔNG build) ----------
+  product-api:
+    image: ngoclinh0908/product-api:latest
+    pull_policy: always          # luôn kéo bản mới nhất từ Docker Hub khi up
+    container_name: product-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      URL_MONGO: mongodb://mongodb:27017/
+      DATABASE_NAME: productdb
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - product-prod-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mongo_data:
+    name: nammongodb_data       # dùng chung dữ liệu với môi trường dev
+
+networks:
+  product-prod-network:
+    name: product-prod-network

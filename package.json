@@ -6,7 +6,9 @@
   "scripts": {
     "test": "node --test tests/app.test.js",
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "test:crud": "node --test tests/product.crud.test.js",
+    "test:smoke": "node scripts/smoke-test.js"
   },
   "repository": {
     "type": "git",

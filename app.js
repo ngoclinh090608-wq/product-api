@@ -21,7 +21,7 @@ app.use(express.json());
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('Product API is running 🚀');
+  res.send('Product API is running 🚀 (auto-deployed by CI/CD)');
 });
 
 // Health check (API + MongoDB) - used in Step 9

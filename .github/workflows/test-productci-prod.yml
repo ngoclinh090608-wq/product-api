@@ -147,3 +147,33 @@ jobs:
           docker rm -f ci-api ci-mongo || true
           docker network rm ci-net || true
           docker logout || true
+  # ---------- JOB 4: CD - Tự động triển khai xuống Docker Engine trên máy (self-hosted runner) ----------
+  deploy-local:
+    name: CD - Deploy to Local Docker Engine
+    runs-on: [self-hosted, Windows, local-docker]   # chạy trên MÁY CỦA BẠN
+    needs: cd-dockerhub                             # chỉ chạy khi đã push Docker Hub thành công
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 1. Checkout (lấy docker-compose-prod.yaml)
+        uses: actions/checkout@v5
+
+      - name: 2. Stop dev stack nếu đang chạy
+        shell: cmd
+        run: docker compose -p product-compose down & exit /b 0
+
+      - name: 3. Pull image mới nhất từ Docker Hub
+        shell: cmd
+        run: docker compose -f docker-compose-prod.yaml pull || exit /b 1
+
+      - name: 4. Deploy - tạo lại container và đợi healthy
+        shell: cmd
+        run: |
+          docker compose -f docker-compose-prod.yaml up -d --wait || (docker logs product-api & exit /b 1)
+          docker ps
+
+      - name: 5. Kiểm tra image đang chạy và smoke test
+        shell: cmd
+        run: |
+          docker inspect --format "{{.Config.Image}} {{.Image}}" product-api
+          node scripts\smoke-test.js || exit /b 1

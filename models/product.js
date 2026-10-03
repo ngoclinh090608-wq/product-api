@@ -21,7 +21,7 @@ const productSchema = new Schema({
   quantity: {
     type: Number,
     required: [true, 'Product quantity is required.'],
-    min: [1, 'Quantity must be greater than or equal to 1.'],
+    min: [0, 'Quantity must be greater than or equal to 0.'],
     validate: {
       validator: function (v) {
         return Number.isInteger(v); // Custom validator

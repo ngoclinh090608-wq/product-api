@@ -112,7 +112,8 @@ test('Dữ liệu thật sự đã xóa khỏi MongoDB', async () => {
   assert.strictEqual(count, 0);
 });
 
-test('DELETE: xóa sản phẩm không tồn tại -> 404', async () => {
-  const res = await api('DELETE', '/api/products/T001');
+test('GET pid không tồn tại -> 404', async () => {
+  const res = await api('GET', '/api/products/KHONGCO');
   assert.strictEqual(res.status, 404);
 });
+

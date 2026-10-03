@@ -111,3 +111,8 @@ test('Dữ liệu thật sự đã xóa khỏi MongoDB', async () => {
   const count = await Product.countDocuments({ pid: 'T001' });
   assert.strictEqual(count, 0);
 });
+
+test('DELETE: xóa sản phẩm không tồn tại -> 404', async () => {
+  const res = await api('DELETE', '/api/products/T001');
+  assert.strictEqual(res.status, 404);
+});

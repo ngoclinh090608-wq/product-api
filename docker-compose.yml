@@ -1,4 +1,3 @@
-# Tên project Compose (khác tên container để dễ phân biệt)
 name: product-compose
 
 services:

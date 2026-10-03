@@ -95,7 +95,7 @@ product-api/
 │   └── smoke-test.js             # smoke test CRUD trên API đang chạy
 ├── tests/
 │   ├── app.test.js               # 3 test cơ bản (không cần DB)
-│   └── product.crud.test.js      # 12 test CRUD với MongoDB thật
+│   └── product.crud.test.js      # 13 test CRUD với MongoDB thật
 ├── app.js                        # cấu hình Express, kết nối MongoDB
 ├── Dockerfile                    # đóng gói image (có HEALTHCHECK)
 ├── .dockerignore
@@ -218,7 +218,7 @@ npm run dev
 | Lệnh | Nội dung | Cần gì |
 |---|---|---|
 | `npm test` | 3 test cơ bản: `/`, `/health` (503 khi chưa có DB), route 404 | Không cần DB |
-| `npm run test:crud` | 12 test CRUD đầy đủ (tạo, trùng 409, sai dữ liệu 400, JSON lỗi 400, đọc, sửa, xóa, kiểm tra DB) | MongoDB ở `127.0.0.1:27017` |
+| `npm run test:crud` | 13 test CRUD đầy đủ (tạo, trùng 409, sai dữ liệu 400, JSON lỗi 400, đọc, sửa, xóa, kiểm tra DB) | MongoDB ở `127.0.0.1:27017` |
 | `npm run test:smoke` | Smoke test CRUD qua HTTP vào API **đang chạy** (container) | API ở `localhost:3000` |
 
 - `test:crud` dùng database riêng **`productdb_test`** và tự xóa sau khi chạy, nên **không ảnh hưởng** dữ liệu thật.

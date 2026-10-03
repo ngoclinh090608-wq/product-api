@@ -26,7 +26,7 @@ exports.getProductByPid = async (req, res, next) => {
 // POST /api/products
 exports.createProduct = async (req, res, next) => {
   try {
-    const { pid, pname, price, quantity } = req.body || {};
+    const { pname, price, quantity } = req.body || {}; // pid is not editable
     const product = await Product.create({ pid, pname, price, quantity });
     res.status(201).json(product);
   } catch (err) {

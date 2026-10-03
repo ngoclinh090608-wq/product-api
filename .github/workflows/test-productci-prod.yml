@@ -152,7 +152,7 @@ jobs:
     name: CD - Deploy to Local Docker Engine
     runs-on: [self-hosted, Windows, local-docker]   # chạy trên MÁY CỦA BẠN
     needs: cd-dockerhub                             # chỉ chạy khi đã push Docker Hub thành công
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_LOCAL == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_LOCAL == 'true'
 
     steps:
       - name: 1. Checkout (lấy docker-compose-prod.yaml)

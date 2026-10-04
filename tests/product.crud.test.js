@@ -116,4 +116,7 @@ test('GET pid không tồn tại -> 404', async () => {
   const res = await api('GET', '/api/products/KHONGCO');
   assert.strictEqual(res.status, 404);
 });
-
+test('PUT pid không tồn tại -> 404', async () => {
+  const res = await api('PUT', '/api/products/KHONGCO', { price: 100 });
+  assert.strictEqual(res.status, 404);
+});

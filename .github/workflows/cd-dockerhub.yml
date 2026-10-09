@@ -1,0 +1,134 @@
+name: CD Docker Hub
+
+on:
+  workflow_run:
+    workflows: ["Test Product CI - Production"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  cd-dockerhub:
+    name: Healthcheck & push image to Docker Hub
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: ngoclinh0908/product-api
+      COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+
+    steps:
+      - name: 1. Checkout commit đã được CI kiểm tra
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: 2. Build Docker image
+        run: |
+          SHORT_SHA="${COMMIT_SHA::7}"
+          echo "SHORT_SHA=$SHORT_SHA" >> "$GITHUB_ENV"
+          docker build \
+            -t "$IMAGE_NAME:latest" \
+            -t "$IMAGE_NAME:$SHORT_SHA" .
+          docker images "$IMAGE_NAME"
+
+      - name: 3. Healthcheck image trước khi push
+        run: |
+          docker network create ci-net
+
+          docker run -d \
+            --name ci-mongo \
+            --network ci-net \
+            mongo:8.0
+
+          docker run -d \
+            --name ci-api \
+            --network ci-net \
+            -p 3000:3000 \
+            --restart on-failure \
+            -e URL_MONGO=mongodb://ci-mongo:27017/ \
+            -e DATABASE_NAME=productdb \
+            "$IMAGE_NAME:latest"
+
+          STATUS="starting"
+
+          for i in $(seq 1 20); do
+            STATUS=$(docker inspect \
+              --format '{{.State.Health.Status}}' ci-api)
+
+            echo "Lần $i: ci-api is $STATUS"
+
+            if [ "$STATUS" = "healthy" ]; then
+              break
+            fi
+
+            sleep 3
+          done
+
+          docker ps
+
+          if [ "$STATUS" != "healthy" ]; then
+            echo "Image không healthy nên không được push"
+            docker logs ci-api
+            exit 1
+          fi
+
+          curl -f http://localhost:3000/health
+          echo "Image healthy"
+
+      - name: 4. Login Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" |
+          docker login \
+            -u "${{ secrets.DOCKERHUB_USERNAME }}" \
+            --password-stdin
+
+      - name: 5. Push image lên Docker Hub
+        run: |
+          docker push "$IMAGE_NAME:latest"
+          docker push "$IMAGE_NAME:$SHORT_SHA"
+
+      - name: 6. Clean up
+        if: always()
+        run: |
+          docker rm -f ci-api ci-mongo || true
+          docker network rm ci-net || true
+          docker logout || true
+
+  deploy-local:
+    name: Deploy to Local Docker Engine
+    needs: cd-dockerhub
+    if: ${{ vars.DEPLOY_LOCAL == 'true' }}
+    runs-on: [self-hosted, Windows, local-docker]
+
+    steps:
+      - name: 1. Checkout commit đã triển khai
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: 2. Stop dev stack nếu đang chạy
+        shell: cmd
+        run: |
+          if not exist .env copy .env.example .env
+          docker compose -p product-compose -f docker-compose.yml down
+          exit /b 0
+
+      - name: 3. Pull image mới từ Docker Hub
+        shell: cmd
+        run: |
+          docker compose -f docker-compose-prod.yaml pull || exit /b 1
+
+      - name: 4. Deploy và đợi healthy
+        shell: cmd
+        run: |
+          docker compose -f docker-compose-prod.yaml up -d --wait || (docker logs product-api & exit /b 1)
+          docker ps
+
+      - name: 5. Smoke test
+        shell: cmd
+        run: |
+          docker inspect --format "{{.Config.Image}} {{.Image}}" product-api
+          node scripts\smoke-test.js || exit /b 1

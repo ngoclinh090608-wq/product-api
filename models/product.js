@@ -10,7 +10,7 @@ const productSchema = new Schema({
   },
   pname: {
     type: String,
-    required: [true, 'Product name is required.'],
+    required: [false, 'Product name is required.'],
     trim: true
   },
   price: {

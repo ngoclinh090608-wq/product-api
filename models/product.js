@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 const productSchema = new Schema({
   pid: {
     type: String,
-    required: [true, 'Product pid is required.'],
+    required: [false, 'Product pid is required.'],
     unique: true,
     trim: true
   },

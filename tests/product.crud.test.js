@@ -86,3 +86,8 @@ test('DELETE: đọc lại sản phẩm đã xóa -> 404', async () => {
   const res = await api('GET', '/api/products/T001');
   assert.strictEqual(res.status, 404);
 });
+
+test('T001 da xoa khoi MongoDB', async () => {
+  const count = await Product.countDocuments({ pid: 'T001' });
+  assert.strictEqual(count, 0);
+});

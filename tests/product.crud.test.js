@@ -91,3 +91,7 @@ test('READ: GET /api/products -> 200, danh sách rỗng', async () => {
   assert.strictEqual(res.status, 200);
   assert.deepStrictEqual(res.body, []);
 });
+test('GET sam pham khong ton tai -> 404', async () => {
+  const res = await api('GET', '/api/products/NOTEXIST');
+  assert.strictEqual(res.status, 404);
+});

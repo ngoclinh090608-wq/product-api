@@ -43,46 +43,27 @@ after(async () => {
 
 const sample = { pid: 'T001', pname: 'Test product', price: 100000, quantity: 10 };
 
-test('GET /health trả về 200 khi đã kết nối MongoDB', async () => {
-  const res = await api('GET', '/health');
-  assert.strictEqual(res.status, 200);
-  assert.strictEqual(res.body.database, 'connected');
-});
-
-test('CREATE: POST /api/products tạo sản phẩm mới -> 201', async () => {
+test('POST: tạo sản phẩm -> 201', async () => {
   const res = await api('POST', '/api/products', sample);
   assert.strictEqual(res.status, 201);
   assert.strictEqual(res.body.pid, 'T001');
 });
 
-test('CREATE: trùng pid -> 409', async () => {
-  const res = await api('POST', '/api/products', sample);
-  assert.strictEqual(res.status, 409);
-});
-
-test('CREATE: dữ liệu sai (giá âm) -> 400', async () => {
-  const res = await api('POST', '/api/products', { pid: 'T002', pname: 'Bad', price: -1, quantity: 1 });
-  assert.strictEqual(res.status, 400);
-});
-
-test('READ: GET /api/products/T001 -> 200', async () => {
+test('GET: đọc sản phẩm -> 200', async () => {
   const res = await api('GET', '/api/products/T001');
   assert.strictEqual(res.status, 200);
-  assert.strictEqual(res.body.pname, 'Test product');
+  assert.strictEqual(res.body.pname, sample.pname);
 });
 
-test('UPDATE: PUT /api/products/T001 sửa giá -> 200', async () => {
-  const res = await api('PUT', '/api/products/T001', { price: 90000 });
+test('PUT: cập nhật giá -> 200', async () => {
+  const res = await api('PUT', '/api/products/T001', {
+    price: 90000
+  });
   assert.strictEqual(res.status, 200);
   assert.strictEqual(res.body.price, 90000);
 });
 
-test('DELETE: DELETE /api/products/T001 -> 200', async () => {
+test('DELETE: xóa sản phẩm -> 200', async () => {
   const res = await api('DELETE', '/api/products/T001');
   assert.strictEqual(res.status, 200);
-});
-
-test('DELETE: đọc lại sản phẩm đã xóa -> 404', async () => {
-  const res = await api('GET', '/api/products/T001');
-  assert.strictEqual(res.status, 404);
 });

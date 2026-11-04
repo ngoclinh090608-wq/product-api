@@ -15,7 +15,7 @@ jobs:
   # ---------- JOB 1: Test CRUD với MongoDB service ----------
   crud-test:
     name: CRUD test with MongoDB
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     services:
       mongodb:

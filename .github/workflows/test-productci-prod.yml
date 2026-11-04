@@ -58,7 +58,7 @@ jobs:
   # ---------- JOB 2: Test production bằng Docker Compose ----------
   e2e-docker:
     name: E2E test on Docker Compose
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: crud-test
 
     steps:

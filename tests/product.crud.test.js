@@ -67,4 +67,7 @@ test('DELETE: xóa sản phẩm -> 200', async () => {
   const res = await api('DELETE', '/api/products/T001');
   assert.strictEqual(res.status, 200);
 });
-
+test('GET: đọc sản phẩm đã xóa -> 404', async () => {
+  const res = await api('GET', '/api/products/T001');
+  assert.strictEqual(res.status, 404);
+});
